@@ -1,5 +1,5 @@
-PERSISTENCE_DIR = C:/Users/liyutong/Desktop/data
-VERSION = 2.2.2
+PERSISTENCE_DIR = $(shell pwd)/data
+VERSION = 2.14.0
 NAMESPACE = davidliyutong
 IMAGE = mlflow
 
@@ -9,7 +9,11 @@ all: build
 
 build:
 	docker build --build-arg VERSION=${VERSION} -t ${NAMESPACE}/${IMAGE}:${VERSION} .
-	docker tag davidliyutong/mlflow:${VERSION} ${NAMESPACE}/${IMAGE}:latest
+	docker tag ${NAMESPACE}/mlflow:${VERSION} ${NAMESPACE}/${IMAGE}:latest
 
-run:
+push:
+	docker push ${NAMESPACE}/mlflow:${VERSION}
+	docker push ${NAMESPACE}/${IMAGE}:latest
+
+dev:
 	docker run --rm -p 5000:5000 -v ${PERSISTENCE_DIR}:/data  ${NAMESPACE}/${IMAGE}:latest
