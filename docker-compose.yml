@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
     container_name: mlflow
     ports:
-      - "5000:5000"
+      - "8080:8080"
     environment:
       MYSQL_DATABASE: mlflowdb
       MYSQL_USER: mlflow
