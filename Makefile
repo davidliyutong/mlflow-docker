@@ -16,4 +16,4 @@ push:
 	docker push ${NAMESPACE}/${IMAGE}:latest
 
 dev:
-	docker run --rm -p 5000:5000 -v ${PERSISTENCE_DIR}:/data  ${NAMESPACE}/${IMAGE}:latest
+	docker run --rm -p 8080:8080 -v ${PERSISTENCE_DIR}:/data  ${NAMESPACE}/${IMAGE}:latest
