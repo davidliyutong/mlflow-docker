@@ -5,7 +5,7 @@ SMOKE_PYTHON = 3.12
 NAMESPACE = davidliyutong
 IMAGE = mlflow
 
-.PHONY: all build push dev compose-up compose-down smoke
+.PHONY: all build push dev compose-up compose-down smoke FORCE
 
 all: build
 
@@ -28,3 +28,8 @@ compose-down:
 
 smoke:
 	uv run --python ${SMOKE_PYTHON} tests/smoke/mlflow_training_smoke.py
+
+print-%: FORCE
+	@printf '%s\n' '$($*)'
+
+FORCE:

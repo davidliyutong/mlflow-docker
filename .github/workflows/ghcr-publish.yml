@@ -28,9 +28,15 @@ jobs:
       - name: Resolve publish variables
         id: vars
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
+          set -euo pipefail
+
           read_make_var() {
-            make -pn | awk -F ' = ' -v key="$1" '$1 == key { print $2; exit }'
+            make --no-print-directory "print-$1"
           }
 
           VERSION="$(read_make_var VERSION)"
@@ -41,19 +47,25 @@ jobs:
             exit 1
           fi
 
-          IMAGE_NAME_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME_LOWER="${IMAGE_NAME,,}"
+          TARGET_IMAGE="$REGISTRY/$IMAGE_NAME_LOWER"
 
-          if [ "${{ github.event_name }}" = "release" ]; then
-            TAG="${{ github.event.release.tag_name }}"
-          elif [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            TAG="${{ github.event.inputs.image_tag }}"
+          if [ "$EVENT_NAME" = "release" ]; then
+            TAGS=(
+              "$TARGET_IMAGE:$RELEASE_TAG"
+              "$TARGET_IMAGE:$VERSION"
+              "$TARGET_IMAGE:latest"
+            )
+          elif [ -n "$INPUT_IMAGE_TAG" ]; then
+            TAGS=("$TARGET_IMAGE:$INPUT_IMAGE_TAG")
           else
-            TAG="latest"
+            TAGS=("$TARGET_IMAGE:latest")
           fi
 
-          echo "source_image=$NAMESPACE/$IMAGE:$VERSION" >> "$GITHUB_OUTPUT"
-          echo "target_image=${{ env.REGISTRY }}/$IMAGE_NAME_LOWER" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          {
+            echo "source_image=$NAMESPACE/$IMAGE:$VERSION"
+            echo "tags=${TAGS[*]}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -66,6 +78,14 @@ jobs:
         run: make build
 
       - name: Tag and push image
+        shell: bash
+        env:
+          SOURCE_IMAGE: ${{ steps.vars.outputs.source_image }}
+          TAGS: ${{ steps.vars.outputs.tags }}
         run: |
-          docker tag "${{ steps.vars.outputs.source_image }}" "${{ steps.vars.outputs.target_image }}:${{ steps.vars.outputs.tag }}"
-          docker push "${{ steps.vars.outputs.target_image }}:${{ steps.vars.outputs.tag }}"
+          set -euo pipefail
+
+          for tag in $TAGS; do
+            docker tag "$SOURCE_IMAGE" "$tag"
+            docker push "$tag"
+          done
