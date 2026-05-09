@@ -27,7 +27,20 @@ jobs:
 
       - name: Resolve publish variables
         id: vars
+        shell: bash
         run: |
+          read_make_var() {
+            make -pn | awk -F ' = ' -v key="$1" '$1 == key { print $2; exit }'
+          }
+
+          VERSION="$(read_make_var VERSION)"
+          NAMESPACE="$(read_make_var NAMESPACE)"
+          IMAGE="$(read_make_var IMAGE)"
+          if [ -z "$VERSION" ] || [ -z "$NAMESPACE" ] || [ -z "$IMAGE" ]; then
+            echo "Missing VERSION, NAMESPACE, or IMAGE in Makefile" >&2
+            exit 1
+          fi
+
           IMAGE_NAME_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
 
           if [ "${{ github.event_name }}" = "release" ]; then
@@ -38,7 +51,8 @@ jobs:
             TAG="latest"
           fi
 
-          echo "image=${{ env.REGISTRY }}/$IMAGE_NAME_LOWER" >> "$GITHUB_OUTPUT"
+          echo "source_image=$NAMESPACE/$IMAGE:$VERSION" >> "$GITHUB_OUTPUT"
+          echo "target_image=${{ env.REGISTRY }}/$IMAGE_NAME_LOWER" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
@@ -48,9 +62,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.vars.outputs.image }}:${{ steps.vars.outputs.tag }}
+      - name: Build image
+        run: make build
+
+      - name: Tag and push image
+        run: |
+          docker tag "${{ steps.vars.outputs.source_image }}" "${{ steps.vars.outputs.target_image }}:${{ steps.vars.outputs.tag }}"
+          docker push "${{ steps.vars.outputs.target_image }}:${{ steps.vars.outputs.tag }}"

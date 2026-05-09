@@ -3,7 +3,7 @@ VERSION = 2.14.0
 NAMESPACE = davidliyutong
 IMAGE = mlflow
 
-.PHONY: all
+.PHONY: all build push dev compose-up compose-down smoke
 
 all: build
 
@@ -17,3 +17,12 @@ push:
 
 dev:
 	docker run --rm -p 8080:8080 -v ${PERSISTENCE_DIR}:/data  ${NAMESPACE}/${IMAGE}:latest
+
+compose-up:
+	DOCKER_BUILDKIT=0 docker compose up -d --build
+
+compose-down:
+	docker compose down
+
+smoke:
+	uv run tests/smoke/mlflow_training_smoke.py

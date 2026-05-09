@@ -1,7 +1,6 @@
 FROM python:3.10-slim-bullseye
-ARG VERSION
-RUN pip install --no-cache mlflow==$VERSION && pip install mlflow[extras]
-RUN pip install pymysql
+ARG VERSION=2.14.0
+RUN pip install --no-cache-dir "setuptools<81" "mlflow==${VERSION}" boto3 pymysql
 
 
 WORKDIR /opt/mlflow

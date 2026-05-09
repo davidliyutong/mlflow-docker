@@ -3,7 +3,7 @@
 This repository provides a Docker image for running an MLflow Tracking Server backed by:
 
 - **MySQL** for metadata (runs, params, metrics)
-- **S3-compatible object storage** (such as MinIO) for artifacts
+- **S3-compatible object storage** (RustFS) for artifacts
 
 It is updated to align with the latest MLflow quickstart workflow (`mlflow server --host 127.0.0.1 --port 8080`) from MLflow docs.
 
@@ -13,6 +13,7 @@ It is updated to align with the latest MLflow quickstart workflow (`mlflow serve
 
 - Docker
 - GNU Make
+- uv (for the smoke training client)
 
 ### Configure image metadata
 
@@ -42,24 +43,30 @@ make push
 The provided `docker-compose.yml` starts:
 
 - `db` (MySQL 5.7)
+- `rustfs` (S3-compatible artifact storage)
 - `mlflow` (Tracking Server on port **8080**)
 
-Update secrets and endpoints in `docker-compose.yml`:
-
-- `MLFLOW_S3_ENDPOINT_URL`
-- `MLFLOW_S3_BUCKET`
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-
-Start services:
+Start services with the Makefile wrapper:
 
 ```bash
-docker compose up -d
+make compose-up
+```
+
+This runs:
+
+```bash
+DOCKER_BUILDKIT=0 docker compose up -d --build
 ```
 
 Open MLflow UI:
 
 - http://localhost:8080
+
+Open RustFS console:
+
+- http://localhost:9001
+- Username: `mlflow`
+- Password: `mlflowpassword`
 
 ## Client quickstart connection
 
@@ -72,10 +79,19 @@ mlflow.set_tracking_uri("http://localhost:8080")
 
 This follows the current MLflow quickstart flow of running a tracking server and explicitly setting the tracking URI.
 
+Run the included minimum training smoke test:
+
+```bash
+make smoke
+```
+
+The smoke test creates an MLflow experiment, logs a small training run, records metrics, uploads model metadata, binary weights, a generated loss-curve image, and text/JSONL files, then downloads those artifacts back through the tracking server.
+
 ## Notes
 
 - The container entrypoint constructs `MLFLOW_BACKEND_STORE_URI` from `MYSQL_*` environment variables.
 - Artifact storage is configured with `--artifacts-destination s3://<bucket>/`.
+- The Compose stack creates the `mlflow` bucket in RustFS before starting the tracking server.
 - If you need local-file artifact storage instead of S3, adjust `entrypoint.sh` accordingly.
 
 ## References
