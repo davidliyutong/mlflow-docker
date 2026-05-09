@@ -1,7 +1,7 @@
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.12,<3.13"
 # dependencies = [
-#   "mlflow==2.14.0",
+#   "mlflow==3.12.0",
 #   "setuptools<81",
 # ]
 # ///
@@ -10,6 +10,7 @@ import argparse
 import binascii
 import json
 import struct
+import sys
 import tempfile
 import time
 import warnings
@@ -244,6 +245,8 @@ def main() -> None:
         json.dumps(
             {
                 "tracking_uri": args.tracking_uri,
+                "python_version": sys.version.split()[0],
+                "mlflow_version": mlflow.__version__,
                 "experiment_id": experiment.experiment_id,
                 "run_id": run_id,
                 "status": finished_run.info.status,

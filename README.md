@@ -21,7 +21,9 @@ Edit `Makefile` values as needed:
 
 ```makefile
 PERSISTENCE_DIR = $(shell pwd)/data
-VERSION = 2.14.0
+VERSION = 3.12.0
+PYTHON_VERSION = 3.12.13
+SMOKE_PYTHON = 3.12
 NAMESPACE = davidliyutong
 IMAGE = mlflow
 ```

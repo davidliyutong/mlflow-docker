@@ -1,5 +1,7 @@
 PERSISTENCE_DIR = $(shell pwd)/data
-VERSION = 2.14.0
+VERSION = 3.12.0
+PYTHON_VERSION = 3.12.13
+SMOKE_PYTHON = 3.12
 NAMESPACE = davidliyutong
 IMAGE = mlflow
 
@@ -8,7 +10,7 @@ IMAGE = mlflow
 all: build
 
 build:
-	docker build --build-arg VERSION=${VERSION} -t ${NAMESPACE}/${IMAGE}:${VERSION} .
+	docker build --build-arg VERSION=${VERSION} --build-arg PYTHON_VERSION=${PYTHON_VERSION} -t ${NAMESPACE}/${IMAGE}:${VERSION} .
 	docker tag ${NAMESPACE}/mlflow:${VERSION} ${NAMESPACE}/${IMAGE}:latest
 
 push:
@@ -25,4 +27,4 @@ compose-down:
 	docker compose down
 
 smoke:
-	uv run tests/smoke/mlflow_training_smoke.py
+	uv run --python ${SMOKE_PYTHON} tests/smoke/mlflow_training_smoke.py

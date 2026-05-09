@@ -1,5 +1,6 @@
-FROM python:3.10-slim-bullseye
-ARG VERSION=2.14.0
+ARG PYTHON_VERSION=3.12.13
+FROM python:${PYTHON_VERSION}-slim-bookworm
+ARG VERSION=3.12.0
 RUN pip install --no-cache-dir "setuptools<81" "mlflow==${VERSION}" boto3 pymysql
 
 
