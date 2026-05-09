@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 if [[ $MLFLOW_BACKEND_STORE_URI  == "sqlite://"* ]]; then
     path=${MLFLOW_BACKEND_STORE_URI#*sqlite:\/\/}
     if [[ -f $path ]]; then
@@ -7,7 +9,7 @@ if [[ $MLFLOW_BACKEND_STORE_URI  == "sqlite://"* ]]; then
         exit 0
     else
         echo "Creating sqlite database at $path"
-        touch path
+        touch "$path"
     fi
 fi
 
@@ -30,7 +32,7 @@ echo "AWS_DEFAULT_REGION=" $AWS_DEFAULT_REGION # us-east-1
 
 mlflow server \
     --host 0.0.0.0 \
-    --port 5000 \
+    --port 8080 \
     --backend-store-uri ${MLFLOW_BACKEND_STORE_URI}\
     --artifacts-destination s3://${MLFLOW_S3_BUCKET}/ \
     --default-artifact-root s3://${MLFLOW_S3_BUCKET}/
