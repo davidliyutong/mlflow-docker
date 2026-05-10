@@ -46,7 +46,7 @@ The provided `docker-compose.yml` starts:
 
 - `db` (MySQL 5.7)
 - `rustfs` (S3-compatible artifact storage)
-- `mlflow` (Tracking Server on port **8080**)
+- `mlflow` (Tracking Server on host port **8080** by default)
 
 Start services with the Makefile wrapper:
 
@@ -63,6 +63,13 @@ DOCKER_BUILDKIT=0 docker compose up -d --build
 Open MLflow UI:
 
 - http://localhost:8080
+
+To bind MLflow to another host port, set `MLFLOW_HOST_PORT` before starting
+Compose. For example, this serves the UI on `http://localhost:28080`:
+
+```bash
+MLFLOW_HOST_PORT=28080 make compose-up
+```
 
 Open RustFS console:
 
@@ -94,6 +101,13 @@ The smoke test creates an MLflow experiment, logs a small training run, records 
 - The container entrypoint constructs `MLFLOW_BACKEND_STORE_URI` from `MYSQL_*` environment variables.
 - Artifact storage is configured with `--artifacts-destination s3://<bucket>/`.
 - The Compose stack creates the `mlflow` bucket in RustFS before starting the tracking server.
+- By default, Compose leaves `MLFLOW_ALLOWED_HOSTS` unset so MLflow uses its built-in
+  security defaults for localhost and private IP hosts on any port. If you expose
+  the server through a DNS name, set `MLFLOW_ALLOWED_HOSTS` to the exact host
+  header patterns you need, for example `mlflow.company.com,mlflow.company.com:*`.
+- If a separate web origin must call MLflow APIs directly, set
+  `MLFLOW_CORS_ALLOWED_ORIGINS` to that origin, for example
+  `https://notebook.company.com`.
 - If you need local-file artifact storage instead of S3, adjust `entrypoint.sh` accordingly.
 
 ## References
