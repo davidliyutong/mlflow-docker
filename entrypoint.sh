@@ -21,6 +21,7 @@ export MYSQL_PASSWORD="${MYSQL_PASSWORD:-mlflow}"
 export MLFLOW_S3_ENDPOINT_URL="${MLFLOW_S3_ENDPOINT_URL:-http://rustfs:9000}"
 export MLFLOW_S3_IGNORE_TLS="${MLFLOW_S3_IGNORE_TLS:-true}"
 export MLFLOW_S3_BUCKET="${MLFLOW_S3_BUCKET:-mlflow}"
+export MLFLOW_ALLOWED_HOSTS="${MLFLOW_ALLOWED_HOSTS:-}"
 export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
 
 python - <<'PY'
@@ -63,12 +64,21 @@ echo "MLFLOW_BACKEND_STORE_URI=mysql+pymysql://${MYSQL_USER}:***@${MYSQL_HOST}:$
 echo "MLFLOW_S3_ENDPOINT_URL=$MLFLOW_S3_ENDPOINT_URL"
 echo "MLFLOW_S3_IGNORE_TLS=$MLFLOW_S3_IGNORE_TLS"
 echo "MLFLOW_S3_BUCKET=$MLFLOW_S3_BUCKET"
+echo "MLFLOW_ALLOWED_HOSTS=$MLFLOW_ALLOWED_HOSTS"
 echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}"
 echo "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION"
 
-mlflow server \
-    --host 0.0.0.0 \
-    --port 8080 \
-    --backend-store-uri "${MLFLOW_BACKEND_STORE_URI}" \
-    --serve-artifacts \
+mlflow_server_args=(
+    server
+    --host 0.0.0.0
+    --port 8080
+    --backend-store-uri "${MLFLOW_BACKEND_STORE_URI}"
+    --serve-artifacts
     --artifacts-destination "s3://${MLFLOW_S3_BUCKET}/"
+)
+
+if [[ -n $MLFLOW_ALLOWED_HOSTS ]]; then
+    mlflow_server_args+=(--allowed-hosts "$MLFLOW_ALLOWED_HOSTS")
+fi
+
+mlflow "${mlflow_server_args[@]}"

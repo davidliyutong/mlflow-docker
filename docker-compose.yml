@@ -4,7 +4,7 @@ x-mlflow-image: &mlflow-image
     args:
       VERSION: ${MLFLOW_VERSION:-3.12.0}
       PYTHON_VERSION: ${PYTHON_VERSION:-3.12.13}
-  image: davidliyutong/mlflow:latest
+  image: ghcr.io/davidliyutong/mlflow-docker:latest
 
 services:
   db:
@@ -117,6 +117,7 @@ services:
       MLFLOW_S3_ENDPOINT_URL: http://rustfs:9000
       MLFLOW_S3_IGNORE_TLS: "true"
       MLFLOW_S3_BUCKET: mlflow
+      MLFLOW_ALLOWED_HOSTS: ${MLFLOW_ALLOWED_HOSTS:-mlflow.company.com,192.168.1.100}
       AWS_ACCESS_KEY_ID: mlflow
       AWS_SECRET_ACCESS_KEY: mlflowpassword
       AWS_DEFAULT_REGION: us-east-1

@@ -3,7 +3,7 @@ VERSION = 3.12.0
 PYTHON_VERSION = 3.12.13
 SMOKE_PYTHON = 3.12
 NAMESPACE = davidliyutong
-IMAGE = mlflow
+IMAGE = mlflow-docker
 
 .PHONY: all build push dev compose-up compose-down smoke FORCE
 
@@ -11,10 +11,10 @@ all: build
 
 build:
 	docker build --build-arg VERSION=${VERSION} --build-arg PYTHON_VERSION=${PYTHON_VERSION} -t ${NAMESPACE}/${IMAGE}:${VERSION} .
-	docker tag ${NAMESPACE}/mlflow:${VERSION} ${NAMESPACE}/${IMAGE}:latest
+	docker tag ${NAMESPACE}/${IMAGE}:${VERSION} ${NAMESPACE}/${IMAGE}:latest
 
 push:
-	docker push ${NAMESPACE}/mlflow:${VERSION}
+	docker push ${NAMESPACE}/${IMAGE}:${VERSION}
 	docker push ${NAMESPACE}/${IMAGE}:latest
 
 dev:

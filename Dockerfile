@@ -10,6 +10,7 @@ RUN chmod +x /opt/mlflow/entrypoint.sh && mkdir -p /data
 
 ENV MLFLOW_BACKEND_STORE_URI=file:///data/mlruns
 ENV MLFLOW_ARTIFACT_ENDPOINT_URL=/data/artifacts
+ENV MLFLOW_ALLOWED_HOSTS=""
 
 EXPOSE 8080
 VOLUME [ "/data" ]
