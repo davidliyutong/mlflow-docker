@@ -1,0 +1,16 @@
+.git
+.github
+compose
+data
+docs
+tests
+.env
+.env.*
+.gitignore
+.editorconfig
+.dockerignore
+CHANGELOG.md
+CONTRIBUTING.md
+AGENTS.md
+Makefile
+docker-compose.yml

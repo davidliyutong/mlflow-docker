@@ -1,0 +1,74 @@
+# Demo/test overlay: OIDC authentication for the MLflow stack, backed by a
+# bundled Keycloak with a pre-imported realm.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.oidc.yml up -d --build
+#   (or `make up-oidc`, `make ci-smoke-oidc`)
+#
+# Not for production: the realm and credentials are development fixtures.
+# For a real deployment, set the OIDC_* variables from .env against your own
+# identity provider — the overlay is not required. See docs/oidc.md.
+
+x-mlflow-image: &mlflow-image
+  build:
+    context: .
+    args:
+      VERSION: ${MLFLOW_VERSION:-3.17.1}
+      PYTHON_VERSION: ${PYTHON_VERSION:-3.12.13}
+      OIDC_AUTH_VERSION: ${MLFLOW_OIDC_AUTH_VERSION:-11.0.0}
+  image: ${MLFLOW_IMAGE:-ghcr.io/davidliyutong/mlflow-docker:latest}
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.8.1}
+    restart: unless-stopped
+    # The HTTP port is fixed at the published port so that Keycloak derives one
+    # issuer (http://keycloak:8180/realms/mlflow) inside the compose network and
+    # for host browsers that map `keycloak` to 127.0.0.1 (see docs/oidc.md).
+    command: ["start-dev", "--import-realm"]
+    ports:
+      - "127.0.0.1:${KEYCLOAK_HOST_PORT:-8180}:8180"
+    volumes:
+      - ./compose/keycloak/realm-mlflow.json:/opt/keycloak/data/import/realm-mlflow.json:ro
+    environment:
+      KC_HTTP_PORT: "8180"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+
+  mlflow:
+    depends_on:
+      keycloak:
+        condition: service_started
+    environment:
+      OIDC_DISCOVERY_URL: http://keycloak:8180/realms/mlflow/.well-known/openid-configuration
+      OIDC_CLIENT_ID: mlflow
+      OIDC_CLIENT_SECRET: ${OIDC_DEMO_CLIENT_SECRET:-mlflow-dev-secret}
+      SECRET_KEY: ${OIDC_DEMO_SECRET_KEY:-dev-secret-change-me}
+      OIDC_USERS_DB_URI: sqlite:////data/auth.db
+      OIDC_WAIT_TIMEOUT: "180"
+      # SQLite auth DB + multiple workers is not supported; the demo runs one.
+      MLFLOW_WORKERS: "1"
+      # The in-network smoke test and host browsers reach the server as
+      # `mlflow:8080` / localhost; setting this replaces MLflow's defaults.
+      MLFLOW_ALLOWED_HOSTS: "mlflow,mlflow:*,localhost,localhost:*,127.0.0.1,127.0.0.1:*"
+
+  # Runs tests/smoke/mlflow_oidc_smoke.py inside the compose network, where the
+  # provider is reachable under the same name and issuer the server uses.
+  # Started explicitly via `docker compose run` (make smoke-oidc).
+  oidc-smoke:
+    <<: *mlflow-image
+    profiles: ["smoke"]
+    depends_on:
+      mlflow:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    entrypoint: ["python"]
+    command:
+      - /tests/smoke/mlflow_oidc_smoke.py
+      - --mlflow-uri
+      - http://mlflow:8080
+      - --keycloak-uri
+      - http://keycloak:8180
+    volumes:
+      - ./tests:/tests:ro

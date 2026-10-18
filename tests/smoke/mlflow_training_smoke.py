@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.12,<3.13"
 # dependencies = [
-#   "mlflow==3.12.0",
+#   "mlflow==3.17.1",
 #   "setuptools<81",
 # ]
 # ///

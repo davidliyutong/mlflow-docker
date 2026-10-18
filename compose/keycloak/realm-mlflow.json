@@ -1,0 +1,89 @@
+{
+  "realm": "mlflow",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "groups": [
+    { "name": "mlflow" },
+    { "name": "mlflow-admin" }
+  ],
+  "clients": [
+    {
+      "clientId": "mlflow",
+      "name": "MLflow Tracking Server",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "mlflow-dev-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://127.0.0.1:8080/*",
+        "http://localhost:8080/*",
+        "http://mlflow:8080/*"
+      ],
+      "webOrigins": [
+        "http://127.0.0.1:8080",
+        "http://localhost:8080",
+        "http://mlflow:8080"
+      ],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "claim.name": "groups"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "mlflow-user",
+      "enabled": true,
+      "email": "mlflow-user@example.com",
+      "emailVerified": true,
+      "firstName": "MLflow",
+      "lastName": "User",
+      "credentials": [
+        { "type": "password", "value": "mlflow-user-password", "temporary": false }
+      ],
+      "groups": ["/mlflow"]
+    },
+    {
+      "username": "mlflow-admin",
+      "enabled": true,
+      "email": "mlflow-admin@example.com",
+      "emailVerified": true,
+      "firstName": "MLflow",
+      "lastName": "Admin",
+      "credentials": [
+        { "type": "password", "value": "mlflow-admin-password", "temporary": false }
+      ],
+      "groups": ["/mlflow-admin"]
+    },
+    {
+      "username": "outsider",
+      "enabled": true,
+      "email": "outsider@example.com",
+      "emailVerified": true,
+      "firstName": "Outsider",
+      "lastName": "User",
+      "credentials": [
+        { "type": "password", "value": "outsider-password", "temporary": false }
+      ],
+      "groups": []
+    }
+  ]
+}
